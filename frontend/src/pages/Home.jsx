@@ -13,12 +13,14 @@ export default function Home() {
 
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || '';
+    const tag = searchParams.get('tag') || '';
 
     useEffect(() => {
         setLoading(true);
         const params = new URLSearchParams({ page, limit: 10 });
         if (search) params.set('search', search);
         if (category) params.set('category', category);
+        if (tag) params.set('tag', tag);
 
         api.get(`/posts?${params}`)
             .then(({ data }) => {
@@ -26,10 +28,10 @@ export default function Home() {
                 setTotalPages(data.pages);
             })
             .finally(() => setLoading(false));
-    }, [search, category, page]);
+    }, [search, category, tag, page]);
 
     // reset page on filter change
-    useEffect(() => { setPage(1); }, [search, category]);
+    useEffect(() => { setPage(1); }, [search, category, tag]);
 
     return (
         <div className="page-layout">
@@ -39,10 +41,16 @@ export default function Home() {
                 {/* Hero / header */}
                 <div style={styles.hero}>
                     <h1 style={styles.heroTitle}>
-                        {search ? `Results for "${search}"` : category ? 'Category Posts' : 'Community Feed'}
+                        {search 
+                            ? `Results for "${search}"` 
+                            : tag 
+                            ? `Posts tagged #${tag}` 
+                            : category 
+                            ? 'Category Posts' 
+                            : 'Community Feed'}
                     </h1>
                     <p style={styles.heroSub}>
-                        {search || category
+                        {search || category || tag
                             ? 'Filtered posts from the IPS Tech community'
                             : 'Discover discussions, ask questions, and share knowledge'}
                     </p>
