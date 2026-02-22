@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { ArrowUp, MessageSquare, Eye, Pin, CheckCircle } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export default function PostCard({ post, onDelete, editUrl }) {
     const { user } = useAuth();
+    const { showToast } = useToast();
     const navigate = useNavigate();
     const [upvotes, setUpvotes] = useState(post.upvotes?.length || 0);
     const [upvoted, setUpvoted] = useState(
@@ -14,12 +16,14 @@ export default function PostCard({ post, onDelete, editUrl }) {
 
     const handleUpvote = async (e) => {
         e.stopPropagation();
-        if (!user) return;
+        if (!user) return navigate('/login');
         try {
             const { data } = await api.post(`/posts/${post._id}/upvote`);
             setUpvotes(data.upvotes);
             setUpvoted(data.upvoted);
-        } catch { }
+        } catch {
+            showToast('Failed to upvote', 'error');
+        }
     };
 
     const timeAgo = (date) => {
@@ -84,7 +88,7 @@ export default function PostCard({ post, onDelete, editUrl }) {
 
             {/* Content preview */}
             <p style={styles.preview}>
-                {post.content?.substring(0, 150)}{post.content?.length > 150 ? 'â€¦' : ''}
+                {post.content?.substring(0, 150)}{post.content?.length > 150 ? '…' : ''}
             </p>
 
             {/* Tags */}
@@ -97,7 +101,7 @@ export default function PostCard({ post, onDelete, editUrl }) {
             )}
 
             {/* Footer */}
-            <div style={styles.footer}>
+            <div style={styles.footer} className="postcard-footer">
                 <button
                     className={`btn btn-sm ${upvoted ? 'btn-primary' : 'btn-ghost'}`}
                     onClick={handleUpvote}
@@ -144,7 +148,7 @@ const styles = {
         fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.55rem',
         background: 'rgba(5,118,66,0.1)', color: '#057642', borderRadius: 999, border: '1px solid rgba(5,118,66,0.25)',
     },
-    header: { display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' },
+    header: { display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' },
     authorName: { fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' },
     meta: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.1rem' },
     catBadge: {
@@ -153,8 +157,8 @@ const styles = {
     },
     time: { fontSize: '0.75rem', color: 'var(--text-muted)' },
     title: { fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--text-primary)', lineHeight: 1.35 },
-    preview: { fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '0.8rem' },
+    preview: { fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '0.8rem', wordBreak: 'break-word', overflowWrap: 'anywhere' },
     tags: { display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.9rem' },
-    footer: { display: 'flex', alignItems: 'center', gap: '0.6rem', paddingTop: '0.7rem', borderTop: '1px solid var(--border-subtle)' },
+    footer: { display: 'flex', alignItems: 'center', gap: '0.6rem', paddingTop: '0.7rem', borderTop: '1px solid var(--border-subtle)', flexWrap: 'wrap' },
     stat: { fontSize: '0.83rem', color: 'var(--text-muted)', fontWeight: 500 },
 };

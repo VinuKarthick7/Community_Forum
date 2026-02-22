@@ -39,7 +39,7 @@ export default function Leaderboard() {
                 ) : (
                     <div style={styles.list}>
                         {leaders.map((entry, i) => (
-                            <div key={entry.user._id} style={styles.row}>
+                            <div key={entry.user._id} style={styles.row} className="leaderboard-row">
                                 <div style={{ ...styles.rank, color: medalColor(i) }}>
                                     {i < 3 ? <Medal size={20} color={medalColor(i)} /> : `#${i + 1}`}
                                 </div>
@@ -52,7 +52,7 @@ export default function Leaderboard() {
                                         <div style={styles.role}>{entry.user.role}</div>
                                     </div>
                                 </Link>
-                                <div style={styles.stats}>
+                                <div style={styles.stats} className="leaderboard-stats">
                                     <span style={styles.stat}>
                                         <ArrowUp size={13} />
                                         {entry.totalUpvotes}
@@ -72,7 +72,7 @@ export default function Leaderboard() {
 }
 
 const styles = {
-    page: { maxWidth: 1128, margin: '0 auto', padding: '2rem 1.5rem' },
+    page: { maxWidth: 1128, margin: '0 auto', padding: 'clamp(1rem, 4vw, 2rem) clamp(0.5rem, 4vw, 1.5rem)' },
     container: { maxWidth: 640, margin: '0 auto' },
     header: { display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' },
     title: { fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' },
@@ -82,7 +82,7 @@ const styles = {
     row: {
         display: 'flex', alignItems: 'center', gap: '1rem',
         background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)', padding: '0.85rem 1.25rem',
+        borderRadius: 'var(--radius)', padding: 'clamp(0.65rem, 2vw, 0.85rem) clamp(0.75rem, 3vw, 1.25rem)',
         boxShadow: 'var(--shadow-xs)',
     },
     rank: { minWidth: 28, textAlign: 'center', fontWeight: 700, fontSize: '0.9rem' },
@@ -93,7 +93,7 @@ const styles = {
     goldAvatar: { border: '2px solid #F59E0B', boxShadow: '0 0 0 2px rgba(245,158,11,0.2)' },
     name: { fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' },
     role: { fontSize: '0.73rem', color: 'var(--text-muted)', textTransform: 'capitalize' },
-    stats: { display: 'flex', gap: '1rem', marginLeft: 'auto', flexShrink: 0 },
+    stats: { display: 'flex', gap: '0.75rem', marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap' },
     stat: {
         display: 'flex', alignItems: 'center', gap: '0.3rem',
         fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600,

@@ -9,6 +9,9 @@ const userSchema = new mongoose.Schema(
         role:      { type: String, enum: ['student', 'admin'], default: 'student' },
         bio:       { type: String, maxlength: 300, default: '' },
         bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
+        isVerified:        { type: Boolean, default: false },
+        verificationToken: { type: String, default: null },
+        verificationExpires: { type: Date, default: null },
     },
     { timestamps: true }
 );

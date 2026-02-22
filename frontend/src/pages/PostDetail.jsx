@@ -10,6 +10,123 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
+/* ── Helpers (module-level) ── */
+const timeAgo = (date) => {
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+};
+
+/* ── CommentItem (module-level to preserve hook state across renders) ── */
+function CommentItem({ c, depth = 0, ctx }) {
+    const {
+        user, isAdminFn, replyTo, setReplyTo, replyText, setReplyText,
+        post, handleUpvoteComment, handleAcceptAnswer, handleDeleteComment,
+        handleReplySubmit, setReportTarget,
+    } = ctx;
+
+    const isAuthor = user && user._id === c.author?._id;
+    const canDelete = isAuthor || isAdminFn();
+    const isReplying = replyTo?.id === c._id;
+    const isPostAuthor = user && post && user._id === post.author?._id;
+    const isAccepted = post?.acceptedAnswer?._id === c._id || post?.acceptedAnswer === c._id;
+    const [cUpvotes, setCUpvotes] = useState(c.upvotes?.length || 0);
+    const [cUpvoted, setCUpvoted] = useState(
+        user ? c.upvotes?.some((id) => id === user._id || id?._id === user._id) : false
+    );
+
+    return (
+        <div style={{ marginLeft: depth > 0 ? '1.75rem' : 0 }} className={depth > 0 ? 'comment-indent' : undefined}>
+            <div style={{
+                ...styles.commentCard,
+                borderLeft: depth > 0 ? '2px solid var(--accent)' : '1px solid var(--border)',
+                ...(isAccepted ? styles.acceptedCard : {}),
+            }}>
+                {isAccepted && (
+                    <div style={styles.acceptedBanner}>
+                        <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Accepted Answer
+                    </div>
+                )}
+                <div style={styles.commentHeader}>
+                    <Link to={`/users/${c.author?._id}`} style={styles.commentAuthorLink}>
+                        <div className="avatar" style={{ width: 28, height: 28, fontSize: '0.7rem' }}>
+                            {c.author?.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                        <span style={styles.commentAuthor}>{c.author?.name}</span>
+                    </Link>
+                    <span style={styles.commentTime}>{timeAgo(c.createdAt)}</span>
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <button
+                            className={`btn btn-sm ${cUpvoted ? 'btn-primary' : 'btn-ghost'}`}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0.5rem' }}
+                            onClick={() => handleUpvoteComment(c._id, (n, v) => { setCUpvotes(n); setCUpvoted(v); })}
+                        >
+                            <ArrowUp size={11} /> {cUpvotes}
+                        </button>
+                        {isPostAuthor && depth === 0 && (
+                            <button
+                                className={`btn btn-sm ${isAccepted ? 'btn-primary' : 'btn-ghost'}`}
+                                onClick={() => handleAcceptAnswer(c._id)}
+                                title={isAccepted ? 'Un-accept answer' : 'Accept as answer'}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                            >
+                                <Check size={11} /> {isAccepted ? 'Accepted' : 'Accept'}
+                            </button>
+                        )}
+                        {user && depth === 0 && (
+                            <button
+                                className="btn btn-ghost btn-sm"
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                onClick={() => setReplyTo(isReplying ? null : { id: c._id, authorName: c.author?.name })}
+                            >
+                                <CornerDownRight size={11} /> {isReplying ? 'Cancel' : 'Reply'}
+                            </button>
+                        )}
+                        {user && (
+                            <button className="btn btn-ghost btn-sm"
+                                style={{ color: 'var(--text-muted)', padding: '0.2rem 0.4rem' }}
+                                onClick={() => setReportTarget({ type: 'comment', id: c._id })}>
+                                <Flag size={11} />
+                            </button>
+                        )}
+                        {canDelete && (
+                            <button className="btn btn-danger btn-sm"
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                onClick={() => handleDeleteComment(c._id)}>
+                                <Trash2 size={11} />
+                            </button>
+                        )}
+                    </div>
+                </div>
+                <p style={styles.commentContent}>{c.content}</p>
+            </div>
+
+            {isReplying && (
+                <form onSubmit={handleReplySubmit} style={{ ...styles.commentForm, marginLeft: '1.75rem', marginTop: '0.5rem' }}>
+                    <div style={styles.replyBanner}>
+                        <CornerDownRight size={12} style={{ marginRight: 4 }} />
+                        Replying to <strong>{replyTo.authorName}</strong>
+                    </div>
+                    <textarea rows={2} placeholder="Write your reply..." value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)} style={{ resize: 'vertical' }} autoFocus />
+                    <button className="btn btn-primary btn-sm" type="submit" style={{ alignSelf: 'flex-end' }}>
+                        Post Reply
+                    </button>
+                </form>
+            )}
+
+            {c.replies?.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
+                    {c.replies.map((r) => <CommentItem key={r._id} c={r} depth={depth + 1} ctx={ctx} />)}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function PostDetail() {
     const { id } = useParams();
     const { user, isAdmin } = useAuth();
@@ -43,10 +160,14 @@ export default function PostDetail() {
 
     const handleUpvote = async () => {
         if (!user) return navigate('/login');
-        const { data } = await api.post(`/posts/${id}/upvote`);
-        setUpvotes(data.upvotes);
-        setUpvoted(data.upvoted);
-        showToast(data.upvoted ? 'Upvoted!' : 'Upvote removed', 'info');
+        try {
+            const { data } = await api.post(`/posts/${id}/upvote`);
+            setUpvotes(data.upvotes);
+            setUpvoted(data.upvoted);
+            showToast(data.upvoted ? 'Upvoted!' : 'Upvote removed', 'info');
+        } catch {
+            showToast('Failed to upvote', 'error');
+        }
     };
 
     const handleBookmark = async () => {
@@ -149,15 +270,6 @@ export default function PostDetail() {
         }
     };
 
-    const timeAgo = (date) => {
-        const diff = Date.now() - new Date(date).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 60) return `${mins}m ago`;
-        const hrs = Math.floor(mins / 60);
-        if (hrs < 24) return `${hrs}h ago`;
-        return `${Math.floor(hrs / 24)}d ago`;
-    };
-
     const buildTree = (comments = []) => {
         const map = {};
         const roots = [];
@@ -174,119 +286,23 @@ export default function PostDetail() {
         return roots;
     };
 
-    const CommentItem = ({ c, depth = 0 }) => {
-        const isAuthor   = user && (user._id === c.author?._id);
-        const canDelete  = isAuthor || isAdmin();
-        const isReplying = replyTo?.id === c._id;
-        const isPostAuthor  = user && post && user._id === post.author?._id;
-        const isAccepted = post?.acceptedAnswer?._id === c._id || post?.acceptedAnswer === c._id;
-        const [cUpvotes, setCUpvotes] = useState(c.upvotes?.length || 0);
-        const [cUpvoted, setCUpvoted] = useState(
-            user ? c.upvotes?.some((id) => id === user._id || id?._id === user._id) : false
-        );
-
-        return (
-            <div style={{ marginLeft: depth > 0 ? '1.75rem' : 0 }}>
-                <div style={{
-                    ...styles.commentCard,
-                    borderLeft: depth > 0 ? '2px solid var(--accent)' : '1px solid var(--border)',
-                    ...(isAccepted ? styles.acceptedCard : {}),
-                }}>
-                    {isAccepted && (
-                        <div style={styles.acceptedBanner}>
-                            <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Accepted Answer
-                        </div>
-                    )}
-                    <div style={styles.commentHeader}>
-                        <Link to={`/users/${c.author?._id}`} style={styles.commentAuthorLink}>
-                            <div className="avatar" style={{ width: 28, height: 28, fontSize: '0.7rem' }}>
-                                {c.author?.name?.charAt(0)?.toUpperCase()}
-                            </div>
-                            <span style={styles.commentAuthor}>{c.author?.name}</span>
-                        </Link>
-                        <span style={styles.commentTime}>{timeAgo(c.createdAt)}</span>
-                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                            {/* Upvote comment */}
-                            <button
-                                className={`btn btn-sm ${cUpvoted ? 'btn-primary' : 'btn-ghost'}`}
-                                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0.5rem' }}
-                                onClick={() => handleUpvoteComment(c._id, (n, v) => { setCUpvotes(n); setCUpvoted(v); })}
-                            >
-                                <ArrowUp size={11} /> {cUpvotes}
-                            </button>
-                            {isPostAuthor && depth === 0 && (
-                                <button
-                                    className={`btn btn-sm ${isAccepted ? 'btn-primary' : 'btn-ghost'}`}
-                                    onClick={() => handleAcceptAnswer(c._id)}
-                                    title={isAccepted ? 'Un-accept answer' : 'Accept as answer'}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                                >
-                                    <Check size={11} /> {isAccepted ? 'Accepted' : 'Accept'}
-                                </button>
-                            )}
-                            {user && depth === 0 && (
-                                <button
-                                    className="btn btn-ghost btn-sm"
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                                    onClick={() => setReplyTo(isReplying ? null : { id: c._id, authorName: c.author?.name })}
-                                >
-                                    <CornerDownRight size={11} /> {isReplying ? 'Cancel' : 'Reply'}
-                                </button>
-                            )}
-                            {user && (
-                                <button className="btn btn-ghost btn-sm"
-                                    style={{ color: 'var(--text-muted)', padding: '0.2rem 0.4rem' }}
-                                    onClick={() => setReportTarget({ type: 'comment', id: c._id })}>
-                                    <Flag size={11} />
-                                </button>
-                            )}
-                            {canDelete && (
-                                <button className="btn btn-danger btn-sm"
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                                    onClick={() => handleDeleteComment(c._id)}>
-                                    <Trash2 size={11} />
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    <p style={styles.commentContent}>{c.content}</p>
-                </div>
-
-                {isReplying && (
-                    <form onSubmit={handleReplySubmit} style={{ ...styles.commentForm, marginLeft: '1.75rem', marginTop: '0.5rem' }}>
-                        <div style={styles.replyBanner}>
-                            <CornerDownRight size={12} style={{ marginRight: 4 }} />
-                            Replying to <strong>{replyTo.authorName}</strong>
-                        </div>
-                        <textarea rows={2} placeholder="Write your reply..." value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)} style={{ resize: 'vertical' }} autoFocus />
-                        <button className="btn btn-primary btn-sm" type="submit" style={{ alignSelf: 'flex-end' }}>
-                            Post Reply
-                        </button>
-                    </form>
-                )}
-
-                {c.replies?.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
-                        {c.replies.map((r) => <CommentItem key={r._id} c={r} depth={depth + 1} />)}
-                    </div>
-                )}
-            </div>
-        );
-    };
-
     if (loading) return <div className="spinner" style={{ marginTop: '5rem' }} />;
     if (!post) return null;
 
     const canModify = user && (user._id === post.author?._id || isAdmin());
     const commentTree = buildTree(post.comments || []);
+    const commentCtx = {
+        user, isAdminFn: isAdmin, replyTo, setReplyTo, replyText, setReplyText,
+        post, handleUpvoteComment, handleAcceptAnswer, handleDeleteComment,
+        handleReplySubmit, setReportTarget,
+    };
 
     return (
-        <div style={styles.page}>
+        <div style={styles.page} className="post-detail-wrap">
             {/* Report Modal */}
             {reportTarget && (
-                <div style={styles.modalOverlay} onClick={() => setReportTarget(null)}>
-                    <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+                <div style={styles.modalOverlay} className="modal-overlay" onClick={() => setReportTarget(null)}>
+                    <div style={styles.modal} className="modal" onClick={(e) => e.stopPropagation()}>
                         <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Flag size={16} color="var(--danger)" /> Report {reportTarget.type}
                         </h2>
@@ -318,7 +334,7 @@ export default function PostDetail() {
                 </div>
 
                 {/* Post */}
-                <article style={styles.article}>
+                <article style={styles.article} className="post-detail-article">
                     {/* Status badges */}
                     {(post.pinned || post.solved) && (
                         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -358,7 +374,7 @@ export default function PostDetail() {
                         </ReactMarkdown>
                     </div>
 
-                    <div style={styles.actions}>
+                    <div style={styles.actions} className="post-actions-row">
                         <button className={`btn ${upvoted ? 'btn-primary' : 'btn-ghost'}`} onClick={handleUpvote}
                             style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                             <ArrowUp size={15} /> Upvote {upvotes > 0 && `(${upvotes})`}
@@ -391,7 +407,7 @@ export default function PostDetail() {
                 </article>
 
                 {/* Comments */}
-                <section style={styles.commentsSection}>
+                <section style={styles.commentsSection} className="comments-section">
                     <h2 style={styles.commentsTitle}>
                         <MessageSquare size={16} style={{ marginRight: 6 }} />
                         {post.comments?.length || 0} Comment{post.comments?.length !== 1 ? 's' : ''}
@@ -422,7 +438,7 @@ export default function PostDetail() {
                                 No comments yet. Be the first!
                             </p>
                         ) : (
-                            commentTree.map((c) => <CommentItem key={c._id} c={c} />)
+                            commentTree.map((c) => <CommentItem key={c._id} c={c} ctx={commentCtx} />)
                         )}
                     </div>
                 </section>
@@ -432,13 +448,13 @@ export default function PostDetail() {
 }
 
 const styles = {
-    page: { maxWidth: 1128, margin: '0 auto', padding: '1.75rem 1.25rem' },
+    page: { maxWidth: 1128, margin: '0 auto', padding: 'clamp(1rem, 4vw, 1.75rem) clamp(0.5rem, 4vw, 1.25rem)' },
     container: { maxWidth: 760, margin: '0 auto' },
     breadcrumb: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem', fontSize: '0.85rem' },
     breadLink: { color: 'var(--accent)', fontWeight: 500 },
     breadSep: { color: 'var(--text-muted)' },
-    article: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.75rem 2rem', marginBottom: '1.25rem', boxShadow: 'var(--shadow-xs)' },
-    title: { fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.3, marginBottom: '1.1rem', color: 'var(--text-primary)' },
+    article: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 'clamp(1rem, 4vw, 1.75rem) clamp(1rem, 5vw, 2rem)', marginBottom: '1.25rem', boxShadow: 'var(--shadow-xs)', overflow: 'hidden', wordBreak: 'break-word' },
+    title: { fontSize: 'clamp(1.2rem, 4vw, 1.6rem)', fontWeight: 800, lineHeight: 1.3, marginBottom: '1.1rem', color: 'var(--text-primary)' },
     meta: { marginBottom: '0.85rem' },
     authorLink: { display: 'inline-flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' },
     authorName: { fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' },
@@ -449,7 +465,7 @@ const styles = {
     actions: { display: 'flex', gap: '0.5rem', marginTop: '1.25rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border-subtle)', flexWrap: 'wrap' },
     pinnedBadge: { fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', background: 'rgba(245,158,11,0.12)', color: '#B45309', borderRadius: 999, border: '1px solid rgba(245,158,11,0.3)' },
     solvedBadge: { fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.6rem', background: 'rgba(5,118,66,0.1)', color: '#057642', borderRadius: 999, border: '1px solid rgba(5,118,66,0.25)' },
-    commentsSection: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.5rem 2rem', boxShadow: 'var(--shadow-xs)' },
+    commentsSection: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 'clamp(1rem, 4vw, 1.5rem) clamp(0.75rem, 5vw, 2rem)', boxShadow: 'var(--shadow-xs)' },
     commentsTitle: { fontSize: '1rem', fontWeight: 700, marginBottom: '1.1rem', color: 'var(--text-primary)' },
     commentForm: { display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.25rem', padding: '0.85rem 1rem', background: 'var(--bg-secondary)', borderRadius: 'var(--radius)', border: '1px solid var(--border-subtle)' },
     replyBanner: { fontSize: '0.82rem', color: 'var(--accent)', fontWeight: 500 },
@@ -459,7 +475,7 @@ const styles = {
     acceptedBanner: { fontSize: '0.73rem', fontWeight: 700, color: '#057642', marginBottom: '0.4rem', display: 'flex', alignItems: 'center' },
     // Report modal
     modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    modal: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', minWidth: 340, maxWidth: 480, width: '90%', boxShadow: 'var(--shadow-lg)' },
+    modal: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 'clamp(1rem, 4vw, 1.5rem)', minWidth: 'auto', maxWidth: 480, width: '92%', boxShadow: 'var(--shadow-lg)' },
     commentHeader: { display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', flexWrap: 'wrap' },
     commentAuthorLink: { display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' },
     commentAuthor: { fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' },

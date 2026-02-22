@@ -11,6 +11,7 @@ const defaultCategories = [
     { name: 'Internships', description: 'Internship opportunities, experiences, and advice.' },
     { name: 'Placements', description: 'Campus placement preparation, companies, and offers.' },
     { name: 'Projects', description: 'Share and discuss your personal and academic projects.' },
+    { name: 'Other', description: 'Anything that doesn\'t fit into the other categories.' },
 ];
 
 const seed = async () => {

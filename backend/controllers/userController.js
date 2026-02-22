@@ -114,7 +114,7 @@ const getLeaderboard = async (req, res) => {
             { $limit: 10 },
             { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
             { $unwind: '$user' },
-            { $project: { _id: 0, user: { _id: 1, name: 1, email: 1, role: 1 }, totalUpvotes: 1, postCount: 1 } },
+            { $project: { _id: 0, user: { _id: 1, name: 1, role: 1 }, totalUpvotes: 1, postCount: 1 } },
         ]);
         res.json(leaders);
     } catch (error) {

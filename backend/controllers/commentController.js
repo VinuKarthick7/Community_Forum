@@ -80,7 +80,7 @@ const upvoteComment = async (req, res) => {
         const comment = await Comment.findById(req.params.id);
         if (!comment) return res.status(404).json({ message: 'Comment not found' });
 
-        const idx = comment.upvotes.indexOf(req.user._id);
+        const idx = comment.upvotes.findIndex((uid) => uid.toString() === req.user._id.toString());
         const upvoted = idx === -1;
         if (upvoted) {
             comment.upvotes.push(req.user._id);

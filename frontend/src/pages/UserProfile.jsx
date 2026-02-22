@@ -50,7 +50,7 @@ export default function UserProfile() {
     return (
         <div style={styles.page}>
             {/* Profile card */}
-            <div style={styles.profileCard}>
+            <div style={styles.profileCard} className="profile-card">
                 <div style={styles.avatarLg}>
                     {profile.name?.charAt(0)?.toUpperCase()}
                 </div>
@@ -67,7 +67,7 @@ export default function UserProfile() {
             </div>
 
             {/* Stats */}
-            <div style={styles.statsRow}>
+            <div style={styles.statsRow} className="profile-stats-row">
                 {[
                     { label: 'Posts',          value: posts.length       },
                     { label: 'Upvotes earned', value: stats.totalUpvotes  },
@@ -95,12 +95,12 @@ export default function UserProfile() {
 }
 
 const styles = {
-    page: { maxWidth: 900, margin: '0 auto', padding: '2rem 1.5rem' },
+    page: { maxWidth: 900, margin: '0 auto', padding: 'clamp(1rem, 4vw, 2rem) clamp(0.5rem, 4vw, 1.5rem)' },
     profileCard: {
         display: 'flex', alignItems: 'center', gap: '1.5rem',
         background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)', padding: '2rem',
-        marginBottom: '1.5rem',
+        borderRadius: 'var(--radius-lg)', padding: 'clamp(1rem, 4vw, 2rem)',
+        marginBottom: '1.5rem', flexWrap: 'wrap',
     },
     avatarLg: {
         width: 72, height: 72, borderRadius: '50%',
@@ -117,7 +117,7 @@ const styles = {
     },
     join: { fontSize: '0.85rem', color: 'var(--text-muted)' },
     bio: { fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: '0.6rem' },
-    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' },
+    statsRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginBottom: '2rem' },
     statCard: {
         background: 'var(--bg-card)', border: '1px solid var(--border)',
         borderRadius: 'var(--radius)', padding: '1.25rem', textAlign: 'center',

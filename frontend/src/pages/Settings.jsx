@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import api from '../api/axios';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
@@ -58,7 +58,7 @@ export default function Settings() {
                 <h1 style={styles.pageTitle}>⚙️ Settings</h1>
 
                 {/* Profile Section */}
-                <section style={styles.section}>
+                <section style={styles.section} className="settings-section">
                     <h2 style={styles.sectionTitle}>Profile</h2>
                     <p style={styles.sectionDesc}>Update your display name and bio visible to other members.</p>
 
@@ -102,7 +102,7 @@ export default function Settings() {
                 </section>
 
                 {/* Password Section */}
-                <section style={styles.section}>
+                <section style={styles.section} className="settings-section">
                     <h2 style={styles.sectionTitle}>Change Password</h2>
                     <p style={styles.sectionDesc}>Use a strong password you don't use elsewhere.</p>
 
@@ -153,7 +153,7 @@ export default function Settings() {
                 </section>
 
                 {/* Account Info */}
-                <section style={styles.section}>
+                <section style={styles.section} className="settings-section">
                     <h2 style={styles.sectionTitle}>Account Info</h2>
                     <div style={styles.infoGrid}>
                         <div style={styles.infoItem}>
@@ -172,12 +172,12 @@ export default function Settings() {
 }
 
 const styles = {
-    page: { maxWidth: 1200, margin: '0 auto', padding: '2rem 1.5rem' },
+    page: { maxWidth: 1200, margin: '0 auto', padding: 'clamp(1rem, 4vw, 2rem) clamp(0.5rem, 4vw, 1.5rem)' },
     container: { maxWidth: 620, margin: '0 auto' },
     pageTitle: { fontSize: '1.6rem', fontWeight: 800, marginBottom: '2rem' },
     section: {
         background: 'var(--bg-card)', border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)', padding: '1.75rem', marginBottom: '1.5rem',
+        borderRadius: 'var(--radius-lg)', padding: 'clamp(1rem, 4vw, 1.75rem)', marginBottom: '1.5rem',
     },
     sectionTitle: { fontSize: '1.05rem', fontWeight: 700, marginBottom: '0.3rem' },
     sectionDesc: { fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' },

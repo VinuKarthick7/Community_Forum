@@ -23,6 +23,7 @@ const getPosts = async (req, res) => {
         const sortStage =
             sort === 'top'  ? { pinned: -1, upvoteCount: -1 } :
             sort === 'hot'  ? { pinned: -1, commentCount: -1 } :
+            sort === 'comments' ? { pinned: -1, commentCount: -1 } :
                               { pinned: -1, createdAt: -1 };
 
         const pipeline = [

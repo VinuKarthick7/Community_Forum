@@ -27,7 +27,7 @@ export default function Bookmarks() {
     };
 
     return (
-        <div style={styles.page}>
+        <div style={styles.page} className="bookmarks-page">
             <div style={styles.container}>
                 <div style={styles.header}>
                     <h1 style={styles.title}>🔖 Saved Posts</h1>
@@ -67,7 +67,7 @@ export default function Bookmarks() {
 }
 
 const styles = {
-    page: { maxWidth: 1200, margin: '0 auto', padding: '2rem 1.5rem' },
+    page: { maxWidth: 1200, margin: '0 auto', padding: 'clamp(1rem, 4vw, 2rem) clamp(0.5rem, 4vw, 1.5rem)' },
     container: { maxWidth: 780, margin: '0 auto' },
     header: { marginBottom: '2rem' },
     title: { fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.25rem' },

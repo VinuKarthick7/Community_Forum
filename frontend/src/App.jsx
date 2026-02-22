@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
@@ -13,25 +13,32 @@ import UserProfile from './pages/UserProfile';
 import Bookmarks from './pages/Bookmarks';
 import Settings from './pages/Settings';
 import Leaderboard from './pages/Leaderboard';
+import VerifyEmail from './pages/VerifyEmail';
 
 function PrivateRoute({ children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return null;
   return user ? children : <Navigate to="/login" replace />;
 }
 
 function AdminRoute({ children }) {
-  const { user, isAdmin } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
+  if (loading) return null;
   return user && isAdmin() ? children : <Navigate to="/" replace />;
 }
 
 function AppRoutes() {
+  const location = useLocation();
+  const hideNavbar = ['/login', '/register'].includes(location.pathname) || location.pathname.startsWith('/verify-email');
+
   return (
     <>
-      <Navbar />
+      {!hideNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/posts/:id" element={<PostDetail />} />
         <Route path="/posts/create" element={<PrivateRoute><CreatePost /></PrivateRoute>} />
         <Route path="/posts/edit/:id" element={<PrivateRoute><CreatePost /></PrivateRoute>} />

@@ -1,112 +1,188 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, ArrowRight, MessageSquare, Users, TrendingUp, Shield, Mail } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+
+const FLOATING_ICONS = [
+    { Icon: MessageSquare, x: '12%', y: '18%', delay: 0,   size: 18 },
+    { Icon: Users,         x: '78%', y: '22%', delay: 1.2, size: 20 },
+    { Icon: TrendingUp,    x: '22%', y: '72%', delay: 0.6, size: 16 },
+    { Icon: Shield,        x: '82%', y: '68%', delay: 1.8, size: 22 },
+    { Icon: MessageSquare, x: '55%', y: '85%', delay: 2.4, size: 14 },
+];
 
 export default function Login() {
     const [form, setForm] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPw, setShowPw] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    const [needsVerification, setNeedsVerification] = useState(false);
+    const [verifyEmail, setVerifyEmail] = useState('');
+    const [resending, setResending] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => { setMounted(true); }, []);
 
     const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(''); setLoading(true);
+        setError(''); setLoading(true); setNeedsVerification(false);
         try {
             const { data } = await api.post('/auth/login', form);
             login(data);
             navigate('/');
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+            const res = err.response?.data;
+            if (res?.needsVerification) {
+                setNeedsVerification(true);
+                setVerifyEmail(res.email);
+            }
+            setError(res?.message || 'Login failed. Please check your credentials.');
         } finally {
             setLoading(false);
         }
     };
 
+    const handleResendVerification = async () => {
+        setResending(true);
+        try {
+            await api.post('/auth/resend-verification', { email: verifyEmail });
+            setError('');
+            setNeedsVerification(false);
+            alert('Verification email sent! Check your inbox.');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to resend verification email.');
+        } finally {
+            setResending(false);
+        }
+    };
+
     return (
-        <div style={styles.page}>
+        <div className="auth-page">
             {/* Left branding panel */}
-            <div style={styles.brand}>
-                <div style={styles.brandInner}>
-                    <div style={styles.brandLogo}>
-                        <img src="/ips-logo.png" alt="IPS" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }} />
-                        <span style={styles.brandName}>IPS Forum</span>
+            <div className="auth-brand-panel">
+                {FLOATING_ICONS.map(({ Icon, x, y, delay, size }, i) => (
+                    <span key={i} className="auth-floating-icon" style={{ left: x, top: y, animationDelay: `${delay}s` }}>
+                        <Icon size={size} />
+                    </span>
+                ))}
+                <div className="auth-deco-circle auth-deco-1" />
+                <div className="auth-deco-circle auth-deco-2" />
+
+                <div className="auth-brand-inner">
+                    <div className="auth-brand-logo">
+                        <img src="/ips-logo.png" alt="IPS" className="auth-logo-img" />
+                        <span className="auth-brand-name">IPS Forum</span>
                     </div>
-                    <h2 style={styles.brandTagline}>
-                        Your college community,<br />all in one place.
+
+                    <h2 className="auth-brand-tagline">
+                        Your college<br />community,<br />
+                        <span className="auth-brand-highlight">all in one place.</span>
                     </h2>
-                    <p style={styles.brandDesc}>
+
+                    <p className="auth-brand-desc">
                         Connect with classmates, share knowledge, discuss projects,
                         and stay updated on campus opportunities.
                     </p>
-                    <div style={styles.brandPills}>
-                        {['💻 Programming', '🚀 Projects', '💼 Internships', '🎯 Placements', '🏆 Hackathons'].map((t) => (
-                            <span key={t} style={styles.brandPill}>{t}</span>
+
+                    <div className="auth-social-proof">
+                        {[
+                            { num: '500+', label: 'Students' },
+                            { num: '1.2K', label: 'Discussions' },
+                            { num: '50+',  label: 'Topics' },
+                        ].map(({ num, label }) => (
+                            <div key={label} className="auth-proof-stat">
+                                <span className="auth-proof-num">{num}</span>
+                                <span className="auth-proof-label">{label}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="auth-brand-pills">
+                        {['Programming', 'Projects', 'Internships', 'Placements', 'Hackathons'].map((t) => (
+                            <span key={t} className="auth-pill">{t}</span>
                         ))}
                     </div>
                 </div>
             </div>
 
             {/* Right form panel */}
-            <div style={styles.formPanel}>
-                <div style={styles.formCard}>
-                    <h1 style={styles.title}>Sign in</h1>
-                    <p style={styles.sub}>
-                        New to IPS Forum? <Link to="/register" style={styles.link}>Create an account</Link>
-                    </p>
+            <div className="auth-form-panel">
+                <div className={`auth-form-card ${mounted ? 'auth-form-visible' : ''}`}>
+                    <div className="auth-mobile-logo">
+                        <img src="/ips-logo.png" alt="IPS Forum" className="auth-mobile-logo-img" />
+                        <span className="auth-mobile-logo-name">IPS Forum</span>
+                        <span className="auth-mobile-logo-tagline">Your college community</span>
+                    </div>
 
-                    {error && <div className="alert alert-error">{error}</div>}
+                    <div className="auth-form-header">
+                        <h1 className="auth-form-title">Welcome back</h1>
+                        <p className="auth-form-sub">Sign in to continue to your community</p>
+                    </div>
 
-                    <form onSubmit={handleSubmit} style={styles.form}>
-                        <div className="form-group">
-                            <label>Email address</label>
-                            <input name="email" type="email" placeholder="you@college.edu" value={form.email} onChange={handleChange} required />
+                    {error && (
+                        <div className="auth-error" role="alert">
+                            <span className="auth-error-dot" />
+                            {error}
+                            {needsVerification && (
+                                <button
+                                    type="button"
+                                    disabled={resending}
+                                    onClick={handleResendVerification}
+                                    style={{
+                                        display: 'block', marginTop: '0.5rem', background: 'none',
+                                        border: 'none', color: 'var(--accent)', cursor: 'pointer',
+                                        fontWeight: 600, fontSize: '0.85rem', padding: 0,
+                                        textDecoration: 'underline',
+                                    }}
+                                >
+                                    {resending ? 'Sending…' : 'Resend verification email'}
+                                </button>
+                            )}
                         </div>
-                        <div className="form-group">
-                            <label>Password</label>
-                            <input name="password" type="password" placeholder="Enter your password" value={form.password} onChange={handleChange} required />
+                    )}
+
+                    <form onSubmit={handleSubmit} className="auth-form">
+                        <div className="auth-field">
+                            <label className="auth-label">Email address</label>
+                            <div className="auth-input-wrap">
+                                <input name="email" type="email" placeholder="you@college.edu"
+                                    value={form.email} onChange={handleChange} className="auth-input" required autoComplete="email" />
+                            </div>
                         </div>
-                        <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.72rem 1.2rem' }} disabled={loading}>
-                            {loading ? 'Signing in…' : 'Sign in'}
+
+                        <div className="auth-field">
+                            <label className="auth-label">Password</label>
+                            <div className="auth-input-wrap auth-pw-wrap">
+                                <input name="password" type={showPw ? 'text' : 'password'} placeholder="Enter your password"
+                                    value={form.password} onChange={handleChange} className="auth-input" required autoComplete="current-password" />
+                                <button type="button" className="auth-pw-toggle" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
+                                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <button className="auth-submit-btn" type="submit" disabled={loading}>
+                            {loading ? <span className="auth-spinner" /> : <>Sign in <ArrowRight size={16} /></>}
                         </button>
                     </form>
+
+                    <div className="auth-divider"><span>or</span></div>
+
+                    <p className="auth-switch">
+                        Don't have an account?{' '}
+                        <Link to="/register" className="auth-switch-link">Create one for free</Link>
+                    </p>
                 </div>
+
+                <p className="auth-footer">
+                    By signing in, you agree to our Terms of Service and Privacy Policy.
+                </p>
             </div>
         </div>
     );
 }
-
-const styles = {
-    page: { minHeight: '100vh', display: 'flex', background: 'var(--bg-base)' },
-    brand: {
-        flex: '0 0 45%',
-        background: 'linear-gradient(145deg, #0A66C2 0%, #004182 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '3rem',
-    },
-    brandInner: { maxWidth: 400 },
-    brandLogo: { display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2.5rem' },
-    brandIcon: { fontSize: '2rem' },
-    brandName: { fontWeight: 800, fontSize: '1.5rem', color: '#fff' },
-    brandTagline: { fontSize: '2rem', fontWeight: 800, color: '#fff', lineHeight: 1.25, marginBottom: '1rem' },
-    brandDesc: { fontSize: '0.98rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, marginBottom: '2rem' },
-    brandPills: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' },
-    brandPill: {
-        padding: '0.35rem 0.75rem', borderRadius: 999,
-        background: 'rgba(255,255,255,0.15)', color: '#fff',
-        fontSize: '0.82rem', fontWeight: 500, backdropFilter: 'blur(4px)',
-        border: '1px solid rgba(255,255,255,0.2)',
-    },
-    formPanel: {
-        flex: 1, display: 'flex', alignItems: 'center',
-        justifyContent: 'center', padding: '2rem',
-    },
-    formCard: { width: '100%', maxWidth: 400 },
-    title: { fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--text-primary)' },
-    sub: { color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.75rem' },
-    form: { display: 'flex', flexDirection: 'column', gap: '1rem' },
-    link: { color: 'var(--accent)', fontWeight: 600 },
-};

@@ -88,7 +88,7 @@ export default function CreatePost() {
     };
 
     return (
-        <div style={styles.page}>
+        <div style={styles.page} className="create-page">
             <div style={styles.container}>
                 <h1 style={styles.title}>
                     {isEdit
@@ -100,7 +100,7 @@ export default function CreatePost() {
 
                 {error && <div className="alert alert-error">{error}</div>}
 
-                <form onSubmit={handleSubmit} style={styles.form}>
+                <form onSubmit={handleSubmit} style={styles.form} className="create-form">
                     <div className="form-group">
                         <label>Post Title *</label>
                         <input name="title" placeholder="What do you want to discuss?" value={form.title}
@@ -154,11 +154,11 @@ export default function CreatePost() {
 }
 
 const styles = {
-    page: { maxWidth: 1200, margin: '0 auto', padding: '2rem 1.5rem' },
+    page: { maxWidth: 1200, margin: '0 auto', padding: 'clamp(1rem, 4vw, 2rem) clamp(0.5rem, 4vw, 1.5rem)' },
     container: { maxWidth: 720, margin: '0 auto' },
-    title: { fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.35rem', display: 'flex', alignItems: 'center' },
+    title: { fontSize: 'clamp(1.2rem, 4vw, 1.6rem)', fontWeight: 800, marginBottom: '0.35rem', display: 'flex', alignItems: 'center' },
     sub: { color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '2rem' },
-    form: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' },
+    form: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 'clamp(1rem, 4vw, 2rem)', display: 'flex', flexDirection: 'column', gap: '1.25rem' },
     btnRow: { display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.5rem' },
     draftBadge: { fontSize: '0.73rem', color: '#057642', fontWeight: 600, display: 'inline-flex', alignItems: 'center' },
 };

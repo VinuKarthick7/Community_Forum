@@ -4,7 +4,12 @@ const Category = require('../models/Category');
 // @route GET /api/categories
 const getCategories = async (req, res) => {
     try {
-        const categories = await Category.find().sort({ name: 1 });
+        // Sort alphabetically but keep "Other" at the end
+        const categories = await Category.aggregate([
+            { $addFields: { _sortOrder: { $cond: [{ $eq: ['$name', 'Other'] }, 1, 0] } } },
+            { $sort: { _sortOrder: 1, name: 1 } },
+            { $project: { _sortOrder: 0 } },
+        ]);
         res.json(categories);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching categories', error: error.message });
@@ -18,7 +23,8 @@ const createCategory = async (req, res) => {
         const { name, description } = req.body;
         if (!name) return res.status(400).json({ message: 'Category name is required' });
 
-        const exists = await Category.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+        const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const exists = await Category.findOne({ name: { $regex: new RegExp(`^${escapedName}$`, 'i') } });
         if (exists) return res.status(400).json({ message: 'Category already exists' });
 
         const category = await Category.create({ name, description });
