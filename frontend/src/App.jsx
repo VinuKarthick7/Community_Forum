@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -8,6 +9,9 @@ import PostDetail from './pages/PostDetail';
 import CreatePost from './pages/CreatePost';
 import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
+import UserProfile from './pages/UserProfile';
+import Bookmarks from './pages/Bookmarks';
+import Settings from './pages/Settings';
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -31,7 +35,10 @@ function AppRoutes() {
         <Route path="/posts/create" element={<PrivateRoute><CreatePost /></PrivateRoute>} />
         <Route path="/posts/edit/:id" element={<PrivateRoute><CreatePost /></PrivateRoute>} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/bookmarks" element={<PrivateRoute><Bookmarks /></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+        <Route path="/users/:id" element={<UserProfile />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
@@ -41,9 +48,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

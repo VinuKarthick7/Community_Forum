@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export default function CreatePost() {
     const { id } = useParams(); // if editing
     const { user } = useAuth();
+    const { showToast } = useToast();
     const navigate = useNavigate();
     const isEdit = Boolean(id);
 
@@ -44,13 +46,17 @@ export default function CreatePost() {
         try {
             if (isEdit) {
                 await api.put(`/posts/${id}`, payload);
+                showToast('Post updated successfully!', 'success');
                 navigate(`/posts/${id}`);
             } else {
                 const { data } = await api.post('/posts', payload);
+                showToast('Post published!', 'success');
                 navigate(`/posts/${data._id}`);
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to save post');
+            const msg = err.response?.data?.message || 'Failed to save post';
+            setError(msg);
+            showToast(msg, 'error');
         } finally {
             setLoading(false);
         }

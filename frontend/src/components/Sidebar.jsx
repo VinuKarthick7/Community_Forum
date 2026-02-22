@@ -51,8 +51,8 @@ export default function Sidebar() {
 }
 
 const styles = {
-    section: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1rem', },
-    sectionTitle: { fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem', padding: '0 0.25rem', },
-    catItem: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 0.75rem', borderRadius: 8, fontSize: '0.88rem', color: 'var(--text-secondary)', transition: 'all 0.2s', marginBottom: '0.15rem', },
-    catActive: { background: 'var(--accent-light)', color: 'var(--accent-hover)', fontWeight: 600, },
+    section: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '0.85rem 0.85rem', boxShadow: 'var(--shadow-xs)' },
+    sectionTitle: { fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.6rem', padding: '0 0.25rem' },
+    catItem: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.45rem 0.6rem', borderRadius: 6, fontSize: '0.875rem', color: 'var(--text-secondary)', transition: 'all 0.15s', marginBottom: '0.1rem', fontWeight: 500 },
+    catActive: { background: 'var(--accent-light)', color: 'var(--accent)', fontWeight: 600 },
 };

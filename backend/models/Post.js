@@ -9,6 +9,10 @@ const postSchema = new mongoose.Schema(
         tags: [{ type: String, trim: true, lowercase: true }],
         upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
         comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
+        views:          { type: Number, default: 0 },
+        pinned:         { type: Boolean, default: false },
+        solved:         { type: Boolean, default: false },
+        acceptedAnswer: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment', default: null },
     },
     { timestamps: true }
 );

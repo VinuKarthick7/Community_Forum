@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const categoryRoutes = require('./routes/categories');
 const postRoutes = require('./routes/posts');
 const commentRoutes = require('./routes/comments');
+const userRoutes = require('./routes/users');
 
 connectDB();
 
@@ -20,6 +21,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/', (req, res) => res.json({ message: 'IPS Tech Forum API running' }));

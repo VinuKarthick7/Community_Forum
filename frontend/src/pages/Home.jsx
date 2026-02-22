@@ -4,11 +4,18 @@ import api from '../api/axios';
 import Sidebar from '../components/Sidebar';
 import PostCard from '../components/PostCard';
 
+const SORT_OPTIONS = [
+    { value: 'newest', label: 'Recent' },
+    { value: 'top',    label: 'Top Voted' },
+    { value: 'hot',    label: 'Trending' },
+];
+
 export default function Home() {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [sort, setSort] = useState('newest');
     const [searchParams] = useSearchParams();
 
     const search = searchParams.get('search') || '';
@@ -17,7 +24,7 @@ export default function Home() {
 
     useEffect(() => {
         setLoading(true);
-        const params = new URLSearchParams({ page, limit: 10 });
+        const params = new URLSearchParams({ page, limit: 10, sort });
         if (search) params.set('search', search);
         if (category) params.set('category', category);
         if (tag) params.set('tag', tag);
@@ -28,10 +35,10 @@ export default function Home() {
                 setTotalPages(data.pages);
             })
             .finally(() => setLoading(false));
-    }, [search, category, tag, page]);
+    }, [search, category, tag, page, sort]);
 
-    // reset page on filter change
-    useEffect(() => { setPage(1); }, [search, category, tag]);
+    // reset page on filter/sort change
+    useEffect(() => { setPage(1); }, [search, category, tag, sort]);
 
     return (
         <div className="page-layout">
@@ -40,20 +47,37 @@ export default function Home() {
             <main>
                 {/* Hero / header */}
                 <div style={styles.hero}>
-                    <h1 style={styles.heroTitle}>
-                        {search 
-                            ? `Results for "${search}"` 
-                            : tag 
-                            ? `Posts tagged #${tag}` 
-                            : category 
-                            ? 'Category Posts' 
-                            : 'Community Feed'}
-                    </h1>
-                    <p style={styles.heroSub}>
-                        {search || category || tag
-                            ? 'Filtered posts from the IPS Tech community'
-                            : 'Discover discussions, ask questions, and share knowledge'}
-                    </p>
+                    <div style={styles.heroTop}>
+                        <div>
+                            <h1 style={styles.heroTitle}>
+                                {search
+                                    ? `Results for "${search}"`
+                                    : tag
+                                    ? `Posts tagged #${tag}`
+                                    : category
+                                    ? 'Category Posts'
+                                    : 'Community Feed'}
+                            </h1>
+                            <p style={styles.heroSub}>
+                                {search || category || tag
+                                    ? 'Filtered posts from the IPS Tech community'
+                                    : 'Discover discussions, ask questions, and share knowledge'}
+                            </p>
+                        </div>
+
+                        {/* Sort buttons */}
+                        <div style={styles.sortRow}>
+                            {SORT_OPTIONS.map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    className={`btn btn-sm ${sort === opt.value ? 'btn-primary' : 'btn-ghost'}`}
+                                    onClick={() => setSort(opt.value)}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -89,12 +113,21 @@ export default function Home() {
 
 const styles = {
     hero: {
-        background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(167,139,250,0.08))',
+        background: 'var(--bg-card)',
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)',
-        padding: '1.75rem 2rem',
-        marginBottom: '1.5rem',
+        padding: '1.25rem 1.5rem',
+        marginBottom: '1rem',
+        boxShadow: 'var(--shadow-xs)',
     },
-    heroTitle: { fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.35rem' },
-    heroSub: { color: 'var(--text-secondary)', fontSize: '0.92rem' },
+    heroTop: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        flexWrap: 'wrap',
+        gap: '1rem',
+    },
+    heroTitle: { fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.2rem', color: 'var(--text-primary)' },
+    heroSub:   { color: 'var(--text-muted)', fontSize: '0.875rem' },
+    sortRow:   { display: 'flex', gap: '0.35rem', flexShrink: 0 },
 };

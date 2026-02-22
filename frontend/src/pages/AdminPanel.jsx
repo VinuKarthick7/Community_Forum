@@ -58,6 +58,15 @@ export default function AdminPanel() {
         setPosts((prev) => prev.filter((p) => p._id !== postId));
     };
 
+    const handlePinPost = async (postId) => {
+        try {
+            const { data } = await api.post(`/posts/${postId}/pin`);
+            setPosts((prev) => prev.map((p) => p._id === postId ? { ...p, pinned: data.pinned } : p));
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to pin post');
+        }
+    };
+
     return (
         <div style={styles.page}>
             <h1 style={styles.heading}>🛡️ Admin Panel</h1>
@@ -113,9 +122,21 @@ export default function AdminPanel() {
             {tab === 'posts' && (
                 <div>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                        {posts.length} total posts · Click Delete to remove any post.
+                        {posts.length} total posts · Pin posts to keep them at the top of the feed.
                     </p>
-                    {posts.map((p) => <PostCard key={p._id} post={p} onDelete={handleDeletePost} />)}
+                    {posts.map((p) => (
+                        <div key={p._id} style={styles.postRow}>
+                            <PostCard post={p} onDelete={handleDeletePost} />
+                            <button
+                                className={`btn btn-sm ${p.pinned ? 'btn-primary' : 'btn-ghost'}`}
+                                style={styles.pinBtn}
+                                onClick={() => handlePinPost(p._id)}
+                                title={p.pinned ? 'Unpin post' : 'Pin to top'}
+                            >
+                                {p.pinned ? '📌 Unpin' : '📌 Pin'}
+                            </button>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>
@@ -127,8 +148,8 @@ const styles = {
     heading: { fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.35rem' },
     sub: { color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.75rem' },
     tabs: { display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border)', marginBottom: '2rem' },
-    tab: { padding: '0.6rem 1.25rem', background: 'none', border: 'none', color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.9rem', cursor: 'pointer', borderBottom: '2px solid transparent', transition: 'all 0.2s' },
-    tabActive: { color: 'var(--accent-hover)', borderBottomColor: 'var(--accent)' },
+    tab: { padding: '0.6rem 1.25rem', background: 'none', border: 'none', color: 'var(--text-muted)', fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer', borderBottom: '2px solid transparent', transition: 'all 0.15s' },
+    tabActive: { color: 'var(--accent)', borderBottomColor: 'var(--accent)' },
     addBox: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', marginBottom: '1.5rem' },
     boxTitle: { fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' },
     addForm: { display: 'flex', gap: '0.75rem', flexWrap: 'wrap' },
@@ -136,4 +157,6 @@ const styles = {
     catCard: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1rem 1.25rem' },
     catName: { fontWeight: 700, fontSize: '0.95rem' },
     catDesc: { fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' },
+    postRow: { position: 'relative' },
+    pinBtn: { position: 'absolute', top: '1rem', right: '1rem', fontSize: '0.75rem' },
 };

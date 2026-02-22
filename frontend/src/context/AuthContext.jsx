@@ -24,8 +24,16 @@ export function AuthProvider({ children }) {
 
     const isAdmin = () => user?.role === 'admin';
 
+    const updateUser = (updates) => {
+        setUser((prev) => {
+            const updated = { ...prev, ...updates };
+            localStorage.setItem('user', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAdmin }}>
+        <AuthContext.Provider value={{ user, login, logout, isAdmin, updateUser }}>
             {children}
         </AuthContext.Provider>
     );
