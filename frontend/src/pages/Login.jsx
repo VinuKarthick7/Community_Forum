@@ -32,7 +32,7 @@ export default function Login() {
             <div style={styles.brand}>
                 <div style={styles.brandInner}>
                     <div style={styles.brandLogo}>
-                        <span style={styles.brandIcon}>⚡</span>
+                        <img src="/ips-logo.png" alt="IPS" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }} />
                         <span style={styles.brandName}>IPS Forum</span>
                     </div>
                     <h2 style={styles.brandTagline}>

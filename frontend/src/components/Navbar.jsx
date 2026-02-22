@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-    Search, X, Zap, Bell, Plus, ChevronDown, LogOut,
+    Search, X, Bell, Plus, ChevronDown, LogOut,
     Settings, User, Bookmark, LayoutDashboard, Menu, Shield,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -104,7 +104,7 @@ export default function Navbar() {
             <div style={styles.inner}>
                 {/* Logo */}
                 <Link to="/" style={styles.logo}>
-                    <Zap size={20} color="var(--accent)" />
+                    <img src="/ips-logo.png" alt="IPS" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
                     <span>IPS Forum</span>
                 </Link>
 
