@@ -12,6 +12,7 @@ import AdminPanel from './pages/AdminPanel';
 import UserProfile from './pages/UserProfile';
 import Bookmarks from './pages/Bookmarks';
 import Settings from './pages/Settings';
+import Leaderboard from './pages/Leaderboard';
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -37,6 +38,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/bookmarks" element={<PrivateRoute><Bookmarks /></PrivateRoute>} />
         <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
         <Route path="/users/:id" element={<UserProfile />} />
         <Route path="*" element={<Navigate to="/" replace />} />

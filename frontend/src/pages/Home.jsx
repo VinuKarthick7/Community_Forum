@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Clock, TrendingUp, Flame, MessageSquare } from 'lucide-react';
 import api from '../api/axios';
 import Sidebar from '../components/Sidebar';
 import PostCard from '../components/PostCard';
 
 const SORT_OPTIONS = [
-    { value: 'newest', label: 'Recent' },
-    { value: 'top',    label: 'Top Voted' },
-    { value: 'hot',    label: 'Trending' },
+    { value: 'newest', label: 'Recent',   Icon: Clock        },
+    { value: 'top',    label: 'Top Voted', Icon: TrendingUp  },
+    { value: 'hot',    label: 'Trending',  Icon: Flame       },
 ];
 
 export default function Home() {
@@ -67,13 +68,14 @@ export default function Home() {
 
                         {/* Sort buttons */}
                         <div style={styles.sortRow}>
-                            {SORT_OPTIONS.map((opt) => (
+                            {SORT_OPTIONS.map(({ value, label, Icon }) => (
                                 <button
-                                    key={opt.value}
-                                    className={`btn btn-sm ${sort === opt.value ? 'btn-primary' : 'btn-ghost'}`}
-                                    onClick={() => setSort(opt.value)}
+                                    key={value}
+                                    className={`btn btn-sm ${sort === value ? 'btn-primary' : 'btn-ghost'}`}
+                                    onClick={() => setSort(value)}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}
                                 >
-                                    {opt.label}
+                                    <Icon size={13} /> {label}
                                 </button>
                             ))}
                         </div>
@@ -84,7 +86,7 @@ export default function Home() {
                     <div className="spinner" />
                 ) : posts.length === 0 ? (
                     <div className="empty-state">
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💬</div>
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><MessageSquare size={48} color="var(--text-muted)" /></div>
                         <h3>No posts found</h3>
                         <p>Be the first to start a discussion!</p>
                     </div>

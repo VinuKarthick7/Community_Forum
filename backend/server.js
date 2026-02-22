@@ -8,6 +8,9 @@ const categoryRoutes = require('./routes/categories');
 const postRoutes = require('./routes/posts');
 const commentRoutes = require('./routes/comments');
 const userRoutes = require('./routes/users');
+const notificationRoutes = require('./routes/notifications');
+const { protect, isAdmin } = require('./middlewares/auth');
+const Report = require('./models/Report');
 
 connectDB();
 
@@ -22,6 +25,16 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
+
+// Admin: get all reports
+app.get('/api/admin/reports', protect, isAdmin, async (req, res) => {
+    try {
+        const reports = await Report.find().sort({ createdAt: -1 }).limit(100)
+            .populate('reporter', 'name email');
+        res.json(reports);
+    } catch (e) { res.status(500).json({ message: e.message }); }
+});
 
 // Health check
 app.get('/', (req, res) => res.json({ message: 'IPS Tech Forum API running' }));

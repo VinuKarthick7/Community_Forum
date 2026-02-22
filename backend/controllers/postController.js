@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
-const Post = require('../models/Post');
+const Post    = require('../models/Post');
 const Comment = require('../models/Comment');
+const Report  = require('../models/Report');
+const { createNotification } = require('./notificationController');
 
 // @desc  Get all posts (with search, filter, sort, pagination)
 // @route GET /api/posts?search=&category=&tag=&author=&page=&limit=&sort=newest|top|hot
@@ -174,12 +176,40 @@ const upvotePost = async (req, res) => {
             post.upvotes = post.upvotes.filter((id) => id.toString() !== userId);
         } else {
             post.upvotes.push(req.user._id);
+            await createNotification({
+                recipient: post.author,
+                sender: req.user._id,
+                type: 'upvote',
+                post: post._id,
+            });
         }
 
         await post.save();
         res.json({ upvotes: post.upvotes.length, upvoted: !hasUpvoted });
     } catch (error) {
         res.status(500).json({ message: 'Error toggling upvote', error: error.message });
+    }
+};
+
+// @desc  Report a post
+// @route POST /api/posts/:id/report
+const reportPost = async (req, res) => {
+    try {
+        const { reason } = req.body;
+        if (!reason) return res.status(400).json({ message: 'Reason is required' });
+
+        const existing = await Report.findOne({ reporter: req.user._id, targetType: 'post', targetId: req.params.id });
+        if (existing) return res.status(400).json({ message: 'You already reported this post' });
+
+        const report = await Report.create({
+            reporter: req.user._id,
+            targetType: 'post',
+            targetId: req.params.id,
+            reason,
+        });
+        res.status(201).json({ message: 'Report submitted', report });
+    } catch (error) {
+        res.status(500).json({ message: 'Error reporting post', error: error.message });
     }
 };
 
@@ -218,4 +248,4 @@ const solvePost = async (req, res) => {
     }
 };
 
-module.exports = { getPosts, getMyPosts, getPost, createPost, updatePost, deletePost, upvotePost, pinPost, solvePost };
+module.exports = { getPosts, getMyPosts, getPost, createPost, updatePost, deletePost, upvotePost, reportPost, pinPost, solvePost };

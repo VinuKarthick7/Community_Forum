@@ -6,6 +6,7 @@ const commentSchema = new mongoose.Schema(
         author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         content: { type: String, required: true, trim: true },
         parentComment: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment', default: null },
+        upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     },
     { timestamps: true }
 );

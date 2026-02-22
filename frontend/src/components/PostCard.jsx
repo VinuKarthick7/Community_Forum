@@ -1,5 +1,6 @@
 ﻿import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { ArrowUp, MessageSquare, Eye, Pin, CheckCircle } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 
@@ -45,8 +46,16 @@ export default function PostCard({ post, onDelete, editUrl }) {
             {/* Pinned / Solved badges */}
             {(post.pinned || post.solved) && (
                 <div style={styles.badges}>
-                    {post.pinned && <span style={styles.pinnedBadge}>ðŸ“Œ Pinned</span>}
-                    {post.solved && <span style={styles.solvedBadge}>âœ… Solved</span>}
+                    {post.pinned && (
+                        <span style={styles.pinnedBadge}>
+                            <Pin size={10} /> Pinned
+                        </span>
+                    )}
+                    {post.solved && (
+                        <span style={styles.solvedBadge}>
+                            <CheckCircle size={10} /> Solved
+                        </span>
+                    )}
                 </div>
             )}
 
@@ -92,12 +101,12 @@ export default function PostCard({ post, onDelete, editUrl }) {
                 <button
                     className={`btn btn-sm ${upvoted ? 'btn-primary' : 'btn-ghost'}`}
                     onClick={handleUpvote}
-                    style={{ pointerEvents: user ? 'auto' : 'none' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', pointerEvents: user ? 'auto' : 'none' }}
                 >
-                    â–² {upvotes}
+                    <ArrowUp size={13} /> {upvotes}
                 </button>
-                <span style={styles.stat}>ðŸ’¬ {post.comments?.length || 0}</span>
-                <span style={styles.stat}>ðŸ‘ {fmtViews(post.views)}</span>
+                <span style={styles.stat}><MessageSquare size={13} style={{ marginRight: 3 }} />{post.comments?.length || 0}</span>
+                <span style={styles.stat}><Eye size={13} style={{ marginRight: 3 }} />{fmtViews(post.views)}</span>
                 {(editUrl || onDelete) && <div style={{ flex: 1 }} />}
                 {editUrl && (
                     <Link
@@ -126,10 +135,12 @@ const styles = {
     pinnedCard: { borderColor: '#F59E0B', borderLeftWidth: 3 },
     badges: { display: 'flex', gap: '0.4rem', marginBottom: '0.6rem' },
     pinnedBadge: {
+        display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
         fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.55rem',
         background: 'rgba(245,158,11,0.12)', color: '#B45309', borderRadius: 999, border: '1px solid rgba(245,158,11,0.3)',
     },
     solvedBadge: {
+        display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
         fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.55rem',
         background: 'rgba(5,118,66,0.1)', color: '#057642', borderRadius: 999, border: '1px solid rgba(5,118,66,0.25)',
     },

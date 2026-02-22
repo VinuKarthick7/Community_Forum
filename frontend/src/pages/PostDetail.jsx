@@ -1,5 +1,11 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import {
+    ArrowUp, Share2, Bookmark, BookmarkCheck, Trash2, CheckCircle2,
+    CornerDownRight, Flag, MessageSquare, Eye, Pin, Check,
+} from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -18,6 +24,8 @@ export default function PostDetail() {
     const [upvotes, setUpvotes] = useState(0);
     const [upvoted, setUpvoted] = useState(false);
     const [bookmarked, setBookmarked] = useState(false);
+    const [reportTarget, setReportTarget] = useState(null); // { type: 'post'|'comment', id }
+    const [reportReason, setReportReason] = useState('');
 
     useEffect(() => {
         api.get(`/posts/${id}`)
@@ -116,6 +124,31 @@ export default function PostDetail() {
         }
     };
 
+    const handleUpvoteComment = async (commentId, cb) => {
+        if (!user) return navigate('/login');
+        try {
+            const { data } = await api.post(`/comments/${commentId}/upvote`);
+            cb(data.upvotes, data.upvoted);
+        } catch { showToast('Failed to upvote', 'error'); }
+    };
+
+    const submitReport = async () => {
+        if (!reportReason.trim()) return;
+        try {
+            if (reportTarget.type === 'post') {
+                await api.post(`/posts/${reportTarget.id}/report`, { reason: reportReason });
+            } else {
+                await api.post('/comments/report', { targetType: 'comment', targetId: reportTarget.id, reason: reportReason });
+            }
+            showToast('Report submitted. Thanks!', 'success');
+        } catch (e) {
+            showToast(e?.response?.data?.message || 'Failed to submit report', 'error');
+        } finally {
+            setReportTarget(null);
+            setReportReason('');
+        }
+    };
+
     const timeAgo = (date) => {
         const diff = Date.now() - new Date(date).getTime();
         const mins = Math.floor(diff / 60000);
@@ -142,11 +175,15 @@ export default function PostDetail() {
     };
 
     const CommentItem = ({ c, depth = 0 }) => {
-        const isAuthor = user && (user._id === c.author?._id);
-        const canDelete = isAuthor || isAdmin();
+        const isAuthor   = user && (user._id === c.author?._id);
+        const canDelete  = isAuthor || isAdmin();
         const isReplying = replyTo?.id === c._id;
-        const isPostAuthor = user && post && user._id === post.author?._id;
+        const isPostAuthor  = user && post && user._id === post.author?._id;
         const isAccepted = post?.acceptedAnswer?._id === c._id || post?.acceptedAnswer === c._id;
+        const [cUpvotes, setCUpvotes] = useState(c.upvotes?.length || 0);
+        const [cUpvoted, setCUpvoted] = useState(
+            user ? c.upvotes?.some((id) => id === user._id || id?._id === user._id) : false
+        );
 
         return (
             <div style={{ marginLeft: depth > 0 ? '1.75rem' : 0 }}>
@@ -156,7 +193,9 @@ export default function PostDetail() {
                     ...(isAccepted ? styles.acceptedCard : {}),
                 }}>
                     {isAccepted && (
-                        <div style={styles.acceptedBanner}>✅ Accepted Answer</div>
+                        <div style={styles.acceptedBanner}>
+                            <CheckCircle2 size={12} style={{ marginRight: 4 }} /> Accepted Answer
+                        </div>
                     )}
                     <div style={styles.commentHeader}>
                         <Link to={`/users/${c.author?._id}`} style={styles.commentAuthorLink}>
@@ -166,27 +205,46 @@ export default function PostDetail() {
                             <span style={styles.commentAuthor}>{c.author?.name}</span>
                         </Link>
                         <span style={styles.commentTime}>{timeAgo(c.createdAt)}</span>
-                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                            {/* Upvote comment */}
+                            <button
+                                className={`btn btn-sm ${cUpvoted ? 'btn-primary' : 'btn-ghost'}`}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0.5rem' }}
+                                onClick={() => handleUpvoteComment(c._id, (n, v) => { setCUpvotes(n); setCUpvoted(v); })}
+                            >
+                                <ArrowUp size={11} /> {cUpvotes}
+                            </button>
                             {isPostAuthor && depth === 0 && (
                                 <button
                                     className={`btn btn-sm ${isAccepted ? 'btn-primary' : 'btn-ghost'}`}
                                     onClick={() => handleAcceptAnswer(c._id)}
                                     title={isAccepted ? 'Un-accept answer' : 'Accept as answer'}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                                 >
-                                    {isAccepted ? '✅ Accepted' : '✓ Accept'}
+                                    <Check size={11} /> {isAccepted ? 'Accepted' : 'Accept'}
                                 </button>
                             )}
                             {user && depth === 0 && (
                                 <button
                                     className="btn btn-ghost btn-sm"
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                                     onClick={() => setReplyTo(isReplying ? null : { id: c._id, authorName: c.author?.name })}
                                 >
-                                    {isReplying ? '✕ Cancel' : '↩ Reply'}
+                                    <CornerDownRight size={11} /> {isReplying ? 'Cancel' : 'Reply'}
+                                </button>
+                            )}
+                            {user && (
+                                <button className="btn btn-ghost btn-sm"
+                                    style={{ color: 'var(--text-muted)', padding: '0.2rem 0.4rem' }}
+                                    onClick={() => setReportTarget({ type: 'comment', id: c._id })}>
+                                    <Flag size={11} />
                                 </button>
                             )}
                             {canDelete && (
-                                <button className="btn btn-danger btn-sm" onClick={() => handleDeleteComment(c._id)}>
-                                    Delete
+                                <button className="btn btn-danger btn-sm"
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                    onClick={() => handleDeleteComment(c._id)}>
+                                    <Trash2 size={11} />
                                 </button>
                             )}
                         </div>
@@ -197,16 +255,11 @@ export default function PostDetail() {
                 {isReplying && (
                     <form onSubmit={handleReplySubmit} style={{ ...styles.commentForm, marginLeft: '1.75rem', marginTop: '0.5rem' }}>
                         <div style={styles.replyBanner}>
-                            ↩ Replying to <strong>{replyTo.authorName}</strong>
+                            <CornerDownRight size={12} style={{ marginRight: 4 }} />
+                            Replying to <strong>{replyTo.authorName}</strong>
                         </div>
-                        <textarea
-                            rows={2}
-                            placeholder="Write your reply..."
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            style={{ resize: 'vertical' }}
-                            autoFocus
-                        />
+                        <textarea rows={2} placeholder="Write your reply..." value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)} style={{ resize: 'vertical' }} autoFocus />
                         <button className="btn btn-primary btn-sm" type="submit" style={{ alignSelf: 'flex-end' }}>
                             Post Reply
                         </button>
@@ -230,6 +283,28 @@ export default function PostDetail() {
 
     return (
         <div style={styles.page}>
+            {/* Report Modal */}
+            {reportTarget && (
+                <div style={styles.modalOverlay} onClick={() => setReportTarget(null)}>
+                    <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Flag size={16} color="var(--danger)" /> Report {reportTarget.type}
+                        </h2>
+                        <textarea
+                            rows={4}
+                            placeholder="Describe the issue..."
+                            value={reportReason}
+                            onChange={(e) => setReportReason(e.target.value)}
+                            style={{ marginBottom: '0.75rem' }}
+                            autoFocus
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                            <button className="btn btn-ghost btn-sm" onClick={() => setReportTarget(null)}>Cancel</button>
+                            <button className="btn btn-danger btn-sm" onClick={submitReport}>Submit Report</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div style={styles.container}>
                 {/* Breadcrumb */}
                 <div style={styles.breadcrumb}>
@@ -247,8 +322,8 @@ export default function PostDetail() {
                     {/* Status badges */}
                     {(post.pinned || post.solved) && (
                         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                            {post.pinned && <span style={styles.pinnedBadge}>📌 Pinned</span>}
-                            {post.solved && <span style={styles.solvedBadge}>✅ Solved</span>}
+                            {post.pinned && <span style={{ ...styles.pinnedBadge, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><Pin size={10} /> Pinned</span>}
+                            {post.solved && <span style={{ ...styles.solvedBadge, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><CheckCircle2 size={10} /> Solved</span>}
                         </div>
                     )}
 
@@ -263,7 +338,7 @@ export default function PostDetail() {
                                     <div style={styles.metaSub}>{timeAgo(post.createdAt)}</div>
                                 </div>
                             </Link>
-                            <div style={styles.viewStat}>👁 {post.views || 0} views</div>
+                            <div style={styles.viewStat}><Eye size={13} style={{ marginRight: 4 }} />{post.views || 0} views</div>
                         </div>
                     </div>
 
@@ -277,33 +352,39 @@ export default function PostDetail() {
 
                     <div className="divider" />
 
-                    <div style={styles.content}>
-                        {post.content.split('\n').map((para, i) => (
-                            <p key={i} style={{ marginBottom: '0.75rem' }}>{para}</p>
-                        ))}
+                    <div className="prose">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {post.content}
+                        </ReactMarkdown>
                     </div>
 
                     <div style={styles.actions}>
-                        <button
-                            className={`btn ${upvoted ? 'btn-primary' : 'btn-ghost'}`}
-                            onClick={handleUpvote}
-                        >
-                            ▲ Upvote {upvotes > 0 && `(${upvotes})`}
+                        <button className={`btn ${upvoted ? 'btn-primary' : 'btn-ghost'}`} onClick={handleUpvote}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <ArrowUp size={15} /> Upvote {upvotes > 0 && `(${upvotes})`}
                         </button>
-                        <button
-                            className={`btn btn-ghost btn-sm`}
-                            onClick={handleBookmark}
-                            title={bookmarked ? 'Remove bookmark' : 'Bookmark this post'}
-                        >
-                            {bookmarked ? '🔖 Saved' : '🔖 Save'}
+                        <button className="btn btn-ghost btn-sm" onClick={handleBookmark}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                            title={bookmarked ? 'Remove bookmark' : 'Bookmark this post'}>
+                            {bookmarked ? <><BookmarkCheck size={14} /> Saved</> : <><Bookmark size={14} /> Save</>}
                         </button>
-                        <button className="btn btn-ghost btn-sm" onClick={handleShare}>
-                            🔗 Share
+                        <button className="btn btn-ghost btn-sm" onClick={handleShare}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Share2 size={14} /> Share
                         </button>
+                        {user && (
+                            <button className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-muted)' }}
+                                onClick={() => setReportTarget({ type: 'post', id: post._id })}>
+                                <Flag size={13} /> Report
+                            </button>
+                        )}
                         {canModify && (
                             <>
                                 <Link to={`/posts/edit/${post._id}`} className="btn btn-outline btn-sm">Edit</Link>
-                                <button className="btn btn-danger btn-sm" onClick={handleDeletePost}>Delete</button>
+                                <button className="btn btn-danger btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                                    onClick={handleDeletePost}>
+                                    <Trash2 size={13} /> Delete
+                                </button>
                             </>
                         )}
                     </div>
@@ -312,7 +393,8 @@ export default function PostDetail() {
                 {/* Comments */}
                 <section style={styles.commentsSection}>
                     <h2 style={styles.commentsTitle}>
-                        💬 {post.comments?.length || 0} Comment{post.comments?.length !== 1 ? 's' : ''}
+                        <MessageSquare size={16} style={{ marginRight: 6 }} />
+                        {post.comments?.length || 0} Comment{post.comments?.length !== 1 ? 's' : ''}
                     </h2>
 
                     {user ? (
@@ -374,7 +456,10 @@ const styles = {
     loginPrompt: { padding: '0.75rem 0', marginBottom: '0.75rem' },
     commentCard: { padding: '0.85rem 1rem', background: 'var(--bg-card)', borderRadius: 'var(--radius)', border: '1px solid var(--border-subtle)' },
     acceptedCard: { borderColor: 'rgba(5,118,66,0.4)', borderLeftWidth: 3, background: 'rgba(5,118,66,0.03)' },
-    acceptedBanner: { fontSize: '0.73rem', fontWeight: 700, color: '#057642', marginBottom: '0.4rem' },
+    acceptedBanner: { fontSize: '0.73rem', fontWeight: 700, color: '#057642', marginBottom: '0.4rem', display: 'flex', alignItems: 'center' },
+    // Report modal
+    modalOverlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    modal: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', minWidth: 340, maxWidth: 480, width: '90%', boxShadow: 'var(--shadow-lg)' },
     commentHeader: { display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', flexWrap: 'wrap' },
     commentAuthorLink: { display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' },
     commentAuthor: { fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' },

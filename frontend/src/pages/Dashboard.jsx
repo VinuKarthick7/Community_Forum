@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { BarChart2, FileText, MessageSquare, PenSquare } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -42,24 +43,26 @@ export default function Dashboard() {
                     <p style={styles.email}>{user.email}</p>
                     <span style={styles.roleBadge}>{user.role}</span>
                 </div>
-                <Link to="/posts/create" className="btn btn-primary" style={{ marginLeft: 'auto' }}>
-                    + New Post
+                <Link to="/posts/create" className="btn btn-primary" style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <PenSquare size={14} /> New Post
                 </Link>
             </div>
 
-            {/* Stats */}
             <div style={styles.stats}>
                 <div style={styles.statCard}>
+                    <BarChart2 size={20} color="var(--accent)" style={{ marginBottom: '0.4rem' }} />
                     <div style={styles.statNumber}>{posts.length}</div>
                     <div style={styles.statLabel}>Posts Created</div>
                 </div>
                 <div style={styles.statCard}>
+                    <FileText size={20} color="var(--accent)" style={{ marginBottom: '0.4rem' }} />
                     <div style={styles.statNumber}>
                         {posts.reduce((sum, p) => sum + (p.upvotes?.length || 0), 0)}
                     </div>
                     <div style={styles.statLabel}>Total Upvotes</div>
                 </div>
                 <div style={styles.statCard}>
+                    <MessageSquare size={20} color="var(--accent)" style={{ marginBottom: '0.4rem' }} />
                     <div style={styles.statNumber}>
                         {posts.reduce((sum, p) => sum + (p.comments?.length || 0), 0)}
                     </div>
@@ -73,11 +76,11 @@ export default function Dashboard() {
                 <div className="spinner" />
             ) : posts.length === 0 ? (
                 <div className="empty-state">
-                    <div style={{ fontSize: '2.5rem' }}>📝</div>
+                    <FileText size={48} color="var(--text-muted)" style={{ marginBottom: '1rem' }} />
                     <h3>No posts yet</h3>
                     <p>Create your first post and share your knowledge!</p>
-                    <Link to="/posts/create" className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-flex' }}>
-                        + Create Post
+                    <Link to="/posts/create" className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <PenSquare size={14} /> Create Post
                     </Link>
                 </div>
             ) : (

@@ -104,4 +104,22 @@ const changePassword = async (req, res) => {
     }
 };
 
-module.exports = { getUser, getUserPosts, toggleBookmark, getBookmarks, updateProfile, changePassword };
+// @desc  Leaderboard — top 10 users by total upvotes received on posts
+// @route GET /api/users/leaderboard  (public)
+const getLeaderboard = async (req, res) => {
+    try {
+        const leaders = await Post.aggregate([
+            { $group: { _id: '$author', totalUpvotes: { $sum: { $size: '$upvotes' } }, postCount: { $sum: 1 } } },
+            { $sort: { totalUpvotes: -1 } },
+            { $limit: 10 },
+            { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+            { $unwind: '$user' },
+            { $project: { _id: 0, user: { _id: 1, name: 1, email: 1, role: 1 }, totalUpvotes: 1, postCount: 1 } },
+        ]);
+        res.json(leaders);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching leaderboard', error: error.message });
+    }
+};
+
+module.exports = { getUser, getUserPosts, toggleBookmark, getBookmarks, updateProfile, changePassword, getLeaderboard };

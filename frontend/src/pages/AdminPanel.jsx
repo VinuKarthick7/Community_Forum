@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Shield, Pin, Trash2, Folder, FileText, Flag, Check } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import PostCard from '../components/PostCard';
@@ -10,16 +11,18 @@ export default function AdminPanel() {
 
     const [categories, setCategories] = useState([]);
     const [posts, setPosts] = useState([]);
+    const [reports, setReports] = useState([]);
     const [newCatName, setNewCatName] = useState('');
     const [newCatDesc, setNewCatDesc] = useState('');
     const [catError, setCatError] = useState('');
-    const [tab, setTab] = useState('categories'); // 'categories' | 'posts'
+    const [tab, setTab] = useState('categories'); // 'categories' | 'posts' | 'reports'
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (!user || !isAdmin()) { navigate('/'); return; }
         fetchCategories();
         fetchPosts();
+        fetchReports();
     }, []);
 
     const fetchCategories = async () => {
@@ -30,6 +33,15 @@ export default function AdminPanel() {
     const fetchPosts = async () => {
         const { data } = await api.get('/posts?limit=50');
         setPosts(data.posts);
+    };
+
+    const fetchReports = async () => {
+        try {
+            const { data } = await api.get('/admin/reports');
+            setReports(data);
+        } catch {
+            // endpoint may not exist yet; silently ignore
+        }
     };
 
     const handleAddCategory = async (e) => {
@@ -69,18 +81,16 @@ export default function AdminPanel() {
 
     return (
         <div style={styles.page}>
-            <h1 style={styles.heading}>🛡️ Admin Panel</h1>
+            <h1 style={styles.heading}><Shield size={22} style={{ marginRight: 8 }} color="var(--accent)" />Admin Panel</h1>
             <p style={styles.sub}>Manage categories, posts, and community moderation.</p>
 
-            {/* Tab nav */}
             <div style={styles.tabs}>
-                {['categories', 'posts'].map((t) => (
-                    <button
-                        key={t}
-                        style={{ ...styles.tab, ...(tab === t ? styles.tabActive : {}) }}
-                        onClick={() => setTab(t)}
-                    >
-                        {t === 'categories' ? '📂 Categories' : '📝 All Posts'}
+                {['categories', 'posts', 'reports'].map((t) => (
+                    <button key={t} style={{ ...styles.tab, ...(tab === t ? styles.tabActive : {}) }}
+                        onClick={() => setTab(t)}>
+                        {t === 'categories' && <><Folder size={13} style={{ marginRight: 4 }} />Categories</>}
+                        {t === 'posts'      && <><FileText size={13} style={{ marginRight: 4 }} />All Posts</>}
+                        {t === 'reports'    && <><Flag size={13} style={{ marginRight: 4 }} />Reports{reports.length > 0 && ` (${reports.length})`}</>}
                     </button>
                 ))}
             </div>
@@ -129,14 +139,45 @@ export default function AdminPanel() {
                             <PostCard post={p} onDelete={handleDeletePost} />
                             <button
                                 className={`btn btn-sm ${p.pinned ? 'btn-primary' : 'btn-ghost'}`}
-                                style={styles.pinBtn}
+                                style={{ ...styles.pinBtn, display: 'flex', alignItems: 'center', gap: '0.3rem' }}
                                 onClick={() => handlePinPost(p._id)}
-                                title={p.pinned ? 'Unpin post' : 'Pin to top'}
                             >
-                                {p.pinned ? '📌 Unpin' : '📌 Pin'}
+                                <Pin size={12} /> {p.pinned ? 'Unpin' : 'Pin'}
                             </button>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Reports tab */}
+            {tab === 'reports' && (
+                <div>
+                    {reports.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                            <Flag size={36} style={{ marginBottom: '0.75rem', opacity: 0.4 }} />
+                            <p>No reports yet.</p>
+                        </div>
+                    ) : (
+                        reports.map((r) => (
+                            <div key={r._id} style={styles.reportCard}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                                    <Flag size={13} color="var(--danger)" />
+                                    <span style={{ fontWeight: 600, fontSize: '0.85rem', textTransform: 'capitalize' }}>
+                                        {r.targetType} reported
+                                    </span>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+                                        by {r.reporter?.name || r.reporter}
+                                    </span>
+                                </div>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>{r.reason}</p>
+                                {r.resolved && (
+                                    <span style={{ fontSize: '0.72rem', color: '#057642', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                        <Check size={11} /> Resolved
+                                    </span>
+                                )}
+                            </div>
+                        ))
+                    )}
                 </div>
             )}
         </div>
@@ -159,4 +200,5 @@ const styles = {
     catDesc: { fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' },
     postRow: { position: 'relative' },
     pinBtn: { position: 'absolute', top: '1rem', right: '1rem', fontSize: '0.75rem' },
+    reportCard: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '1rem 1.25rem', marginBottom: '0.65rem' },
 };

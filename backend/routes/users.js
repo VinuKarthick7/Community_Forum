@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getUser, getUserPosts, toggleBookmark, getBookmarks, updateProfile, changePassword } = require('../controllers/userController');
+const { getUser, getUserPosts, toggleBookmark, getBookmarks, updateProfile, changePassword, getLeaderboard } = require('../controllers/userController');
 const { protect } = require('../middlewares/auth');
 
 // Protected personal routes (must come before /:id to avoid conflicts)
+router.get(   '/leaderboard',        getLeaderboard);          // public
 router.get(   '/bookmarks',          protect, getBookmarks);
 router.post(  '/bookmarks/:postId',  protect, toggleBookmark);
 router.put(   '/profile',            protect, updateProfile);
