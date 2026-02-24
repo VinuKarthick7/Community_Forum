@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import SimpleMDE from 'react-simplemde-editor';
 import 'easymde/dist/easymde.min.css';
@@ -21,6 +21,14 @@ export default function CreatePost() {
     const [draftSaved, setDraftSaved] = useState(false);
     const draftKey = `post_draft_${id || 'new'}`;
     const draftTimer = useRef(null);
+    const editorRef = useRef(null);
+    const formRef = useRef(form);
+    const draftBadgeTimer = useRef(null);
+
+    // Keep formRef in sync without triggering re-renders
+    useEffect(() => {
+        formRef.current = form;
+    }, [form]);
 
     useEffect(() => {
         if (!user) navigate('/login');
@@ -44,19 +52,36 @@ export default function CreatePost() {
         }
     }, []);
 
-    // Auto-save draft (debounced 1s) for new posts
+    // Auto-save draft (debounced 2s) for new posts — uses ref to avoid re-render
     useEffect(() => {
         if (isEdit) return;
         if (draftTimer.current) clearTimeout(draftTimer.current);
         draftTimer.current = setTimeout(() => {
-            localStorage.setItem(draftKey, JSON.stringify(form));
+            localStorage.setItem(draftKey, JSON.stringify(formRef.current));
             setDraftSaved(true);
-            setTimeout(() => setDraftSaved(false), 2000);
-        }, 1000);
-        return () => clearTimeout(draftTimer.current);
-    }, [form, isEdit]);
+            if (draftBadgeTimer.current) clearTimeout(draftBadgeTimer.current);
+            draftBadgeTimer.current = setTimeout(() => setDraftSaved(false), 2000);
+        }, 2000);
+        return () => {
+            clearTimeout(draftTimer.current);
+            clearTimeout(draftBadgeTimer.current);
+        };
+    }, [form.title, form.category, form.tags, form.content, isEdit]);
 
     const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+    // Stable callback — never changes identity, so SimpleMDE won't re-render
+    const handleContentChange = useCallback((val) => {
+        setForm((f) => ({ ...f, content: val }));
+    }, []);
+
+    // Stable options object — never re-created
+    const editorOptions = useMemo(() => ({
+        spellChecker: false,
+        placeholder: 'Write your content here. Supports **bold**, *italic*, `code`, ```code blocks```, and more...',
+        toolbar: ['bold', 'italic', 'strikethrough', '|', 'heading', 'quote', 'unordered-list', 'ordered-list', '|', 'code', 'link', '|', 'preview', 'side-by-side', 'fullscreen'],
+        minHeight: '200px',
+    }), []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -125,14 +150,11 @@ export default function CreatePost() {
                             )}
                         </div>
                         <SimpleMDE
+                            key={`editor-${id || 'new'}`}
+                            ref={editorRef}
                             value={form.content}
-                            onChange={(val) => setForm((f) => ({ ...f, content: val }))}
-                            options={{
-                                spellChecker: false,
-                                placeholder: 'Write your content here. Supports **bold**, *italic*, `code`, ```code blocks```, and more...',
-                                toolbar: ['bold', 'italic', 'strikethrough', '|', 'heading', 'quote', 'unordered-list', 'ordered-list', '|', 'code', 'link', '|', 'preview', 'side-by-side', 'fullscreen'],
-                                minHeight: '200px',
-                            }}
+                            onChange={handleContentChange}
+                            options={editorOptions}
                         />
                     </div>
 

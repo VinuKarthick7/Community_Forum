@@ -377,11 +377,14 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); }
 .prose img { max-width: 100%; border-radius: var(--radius); margin: 0.5em 0; }
 
 /* ── EasyMDE overrides ─────────────────────────────────────── */
-.EasyMDEContainer { border-radius: var(--radius); overflow: hidden; }
+.EasyMDEContainer { border-radius: var(--radius); }
 .EasyMDEContainer .CodeMirror { border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 0.9rem; min-height: 200px; background: var(--bg-card); color: var(--text-primary); }
 .editor-toolbar { background: var(--bg-secondary); border: 1.5px solid var(--border); border-bottom: none; border-radius: var(--radius) var(--radius) 0 0; }
 .editor-toolbar button { color: var(--text-secondary) !important; }
 .editor-toolbar button:hover, .editor-toolbar button.active { background: var(--accent-light) !important; color: var(--accent) !important; border-radius: 4px; }
+.editor-toolbar.fullscreen { z-index: 9999 !important; background: var(--bg-secondary); }
+.CodeMirror-fullscreen { z-index: 9998 !important; }
+.editor-preview-side { z-index: 9998 !important; }
 
 /* ══════════════════════════════════════════════════════════════
    AUTH PAGES — Premium Sign In / Sign Up
