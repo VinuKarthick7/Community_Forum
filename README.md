@@ -1,33 +1,21 @@
-# 🚀 IPS Tech Community Forum
+#  ***IPS Tech Community Forum***
 
 A full-stack MERN (MongoDB, Express, React, Node.js) community forum platform for structured technical discussions, knowledge sharing, and Q&A.
 
-## ✨ Features
+##  Features
 
 ### Core Functionality
-- ✅ **User Authentication** - Secure JWT-based register/login system
-- ✅ **Role-Based Access** - Student and Admin roles with different permissions
-- ✅ **Post Management** - Create, read, update, delete (CRUD) posts
-- ✅ **Comment System** - Add comments and replies to posts
-- ✅ **Upvote System** - Toggle upvotes on posts
-- ✅ **Category Management** - Organize posts by categories
-- ✅ **Tag System** - Tag posts with keywords for better discovery
-- ✅ **Search Functionality** - Full-text search across posts
-- ✅ **User Dashboard** - Personal stats and post management
-- ✅ **Admin Panel** - Moderation tools for admins
+-   **User Authentication** - Secure JWT-based register/login system
+-   **Role-Based Access** - Student and Admin roles with different permissions
+-   **Post Management** - Create, read, update, delete (CRUD) posts
+-   **Comment System** - Add comments and replies to posts
+-   **Upvote System** - Toggle upvotes on posts
+-   **Category Management** - Organize posts by categories
+-   **Tag System** - Tag posts with keywords for better discovery
+-   **Search Functionality** - Full-text search across posts
+-   **User Dashboard** - Personal stats and post management
+-   **Admin Panel** - Moderation tools for admins
 
-### Technical Features
-- Responsive Dark Theme UI
-- JWT Token Authentication
-- Password Hashing with bcrypt
-- MongoDB with Mongoose ODM
-- RESTful API Architecture
-- React Context for State Management
-- Pagination for Posts
-- Protected Routes
-- Error Handling
-
----
 
 ## 📋 Prerequisites
 
@@ -109,135 +97,6 @@ Frontend runs on **http://localhost:5173**
    - Add comments
    - View your dashboard
 
-### Creating an Admin User
-
-To access admin features, manually update a user in MongoDB:
-
-```javascript
-// MongoDB Shell or MongoDB Compass
-db.users.updateOne(
-  { email: "admin@example.com" },
-  { $set: { role: "admin" } }
-)
-```
-
-Then login with that account to access the Admin Panel.
-
----
-
-## 📁 Project Structure
-
-```
-community_forum/
-├── backend/                # Node.js/Express backend
-│   ├── config/            # Database configuration
-│   ├── controllers/       # Request handlers
-│   │   ├── authController.js
-│   │   ├── categoryController.js
-│   │   ├── commentController.js
-│   │   └── postController.js
-│   ├── middlewares/       # Auth & validation middleware
-│   │   └── auth.js
-│   ├── models/            # Mongoose schemas
-│   │   ├── User.js
-│   │   ├── Post.js
-│   │   ├── Comment.js
-│   │   └── Category.js
-│   ├── routes/            # API route definitions
-│   │   ├── auth.js
-│   │   ├── categories.js
-│   │   ├── comments.js
-│   │   └── posts.js
-│   ├── .env               # Environment variables
-│   ├── server.js          # Express app entry point
-│   ├── seed.js            # Database seeding script
-│   └── package.json
-│
-├── frontend/              # React frontend
-│   ├── public/
-│   ├── src/
-│   │   ├── api/          # Axios configuration
-│   │   │   └── axios.js
-│   │   ├── components/   # Reusable UI components
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   └── PostCard.jsx
-│   │   ├── context/      # React Context
-│   │   │   └── AuthContext.jsx
-│   │   ├── pages/        # Route pages
-│   │   │   ├── Home.jsx
-│   │   │   ├── Login.jsx
-│   │   │   ├── Register.jsx
-│   │   │   ├── PostDetail.jsx
-│   │   │   ├── CreatePost.jsx
-│   │   │   ├── Dashboard.jsx
-│   │   │   └── AdminPanel.jsx
-│   │   ├── App.jsx       # Main app with routes
-│   │   ├── App.css
-│   │   ├── index.css     # Global styles
-│   │   └── main.jsx      # Entry point
-│   ├── .env              # Frontend environment variables
-│   ├── index.html
-│   ├── vite.config.js
-│   └── package.json
-│
-├── docker-compose.yml     # MongoDB Docker setup
-├── SETUP_GUIDE.md        # Detailed setup instructions
-└── README.md             # This file
-```
-
----
-
-## 🔌 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user (protected)
-
-### Posts
-- `GET /api/posts` - Get all posts (with search, filter, pagination)
-- `GET /api/posts/:id` - Get single post with comments
-- `POST /api/posts` - Create post (protected)
-- `PUT /api/posts/:id` - Update post (protected, owner/admin)
-- `DELETE /api/posts/:id` - Delete post (protected, owner/admin)
-- `POST /api/posts/:id/upvote` - Toggle upvote (protected)
-
-### Comments
-- `POST /api/comments` - Add comment (protected)
-- `DELETE /api/comments/:id` - Delete comment (protected, owner/admin)
-
-### Categories
-- `GET /api/categories` - Get all categories
-- `POST /api/categories` - Create category (protected, admin)
-- `DELETE /api/categories/:id` - Delete category (protected, admin)
-
----
-
-## 🧪 Testing
-
-### Test User Registration
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Test User",
-    "email": "test@example.com",
-    "password": "password123"
-  }'
-```
-
-### Test User Login
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123"
-  }'
-```
-
----
 
 ## 🎨 Available Scripts
 
@@ -312,36 +171,7 @@ Use MongoDB Atlas for production database
 
 ---
 
-## 🛡️ Security Features
 
-- ✅ JWT token authentication
-- ✅ Password hashing with bcrypt
-- ✅ Protected API routes
-- ✅ Role-based authorization
-- ✅ Input validation
-- ✅ CORS configuration
-- ✅ Error handling
-
----
-
-## 🐛 Troubleshooting
-
-### Backend won't start
-- **Error**: `EADDRINUSE` → Port 5000 is in use, change PORT in .env
-- **Error**: `querySrv ENOTFOUND` → MongoDB not running or wrong URI
-- **Solution**: Check MongoDB is running and .env is configured correctly
-
-### Frontend can't connect to backend
-- Verify backend is running on port 5000
-- Check `VITE_API_URL` in frontend/.env
-- Check browser console for CORS errors
-
-### Can't login after registration
-- Ensure backend connected to database
-- Check JWT_SECRET is set in backend/.env
-- Clear browser localStorage and try again
-
----
 
 ## 📚 Tech Stack
 
@@ -360,40 +190,7 @@ Use MongoDB Atlas for production database
 - **Vite** - Build tool
 - **CSS** - Styling (no framework)
 
----
 
-## 🗺️ Roadmap (Future Enhancements)
 
-- [ ] AI-powered smart search
-- [ ] Duplicate question detection
-- [ ] User leaderboard and badges
-- [ ] Email notifications
-- [ ] Real-time chat/messaging
-- [ ] File attachments in posts
-- [ ] Code syntax highlighting
-- [ ] Markdown support
-- [ ] User profile pages
-- [ ] Follow users/topics
-- [ ] Report system
-
----
-
-## 📄 License
-
-MIT License - Feel free to use this project for learning or production.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
----
-
-## 📧 Contact
-
-For questions or support, please open an issue in the repository.
-
----
 
 **Built with ❤️ for the IPS Tech Community**
