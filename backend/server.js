@@ -1,6 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/auth');
@@ -16,11 +19,29 @@ connectDB();
 
 const app = express();
 
+// Security headers
+app.use(helmet());
+
 app.use(cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
 }));
 app.use(express.json());
+
+// Sanitize req.body / req.query / req.params against NoSQL injection
+app.use(mongoSanitize());
+
+// Rate limiter: max 20 auth requests per 15 minutes per IP
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    message: { message: 'Too many attempts, please try again in 15 minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/resend-verification', authLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);

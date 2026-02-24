@@ -83,8 +83,8 @@ const resendVerification = async (req, res) => {
         if (!email) return res.status(400).json({ message: 'Email is required' });
 
         const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: 'No account found with that email' });
-        if (user.isVerified) return res.status(400).json({ message: 'Email is already verified' });
+        // Generic message to prevent email enumeration
+        if (!user || user.isVerified) return res.status(200).json({ message: 'If that email exists and is unverified, a new link has been sent.' });
 
         // Generate new token
         user.verificationToken = crypto.randomBytes(32).toString('hex');

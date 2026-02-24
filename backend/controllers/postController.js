@@ -54,7 +54,7 @@ const getPosts = async (req, res) => {
         const total = result.metadata[0]?.total || 0;
         res.json({ posts: result.data, total, page: Number(page), pages: Math.ceil(total / Number(limit)) });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching posts', error: error.message });
+        res.status(500).json({ message: 'Error fetching posts' });
     }
 };
 
@@ -68,7 +68,7 @@ const getMyPosts = async (req, res) => {
             .sort({ createdAt: -1 });
         res.json(posts);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching your posts', error: error.message });
+        res.status(500).json({ message: 'Error fetching your posts' });
     }
 };
 
@@ -92,7 +92,7 @@ const getPost = async (req, res) => {
         if (!post) return res.status(404).json({ message: 'Post not found' });
         res.json(post);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching post', error: error.message });
+        res.status(500).json({ message: 'Error fetching post' });
     }
 };
 
@@ -115,7 +115,7 @@ const createPost = async (req, res) => {
         const populated = await post.populate('author', 'name email');
         res.status(201).json(populated);
     } catch (error) {
-        res.status(500).json({ message: 'Error creating post', error: error.message });
+        res.status(500).json({ message: 'Error creating post' });
     }
 };
 
@@ -139,7 +139,7 @@ const updatePost = async (req, res) => {
         const updated = await post.save();
         res.json(updated);
     } catch (error) {
-        res.status(500).json({ message: 'Error updating post', error: error.message });
+        res.status(500).json({ message: 'Error updating post' });
     }
 };
 
